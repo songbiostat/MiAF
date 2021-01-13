@@ -1,1 +1,1 @@
-Functions and example code for MiAF method
+Simulation and real data analysis code in R for MiAF method.
