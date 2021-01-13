@@ -1,6 +1,7 @@
-## This is a simulation example.
-## OTUs are divided into 20 clusters, and the outcome is truly associated with the 1st cluster
-## In this example, covariates Z2 is correlated with OTUs
+## This is a simulation example for the correlated case of scenario 1.
+## Under scenario 1 where OTUs are divided into 20 clusters, and the outcome is truly associated with the 1st cluster.
+## We will assume the outcome is truly associated with each cluster in turn.
+## In this correlated case, covariates Z2 is correlated with OTUs.
 
 library(MiSPU)
 library(boot)
@@ -16,7 +17,8 @@ data(throat.meta)
 tree <- throat.tree
 
 n <- 100     ## number of samples
-clu <- 20     ## OTUs are divided into 20 clusters
+clu <- 20     ## OTUs are divided into 20 clusters under scenario 1
+## The effect size is set to be 0, 1.2, 1.6, 2.4, 3.2 and 4 in the correlated case
 beta <- 1.6     ## effect size
 rep.pow <- 1000     ## number of replicates 
 n.perm <- 1000     ## number of permutation
@@ -34,7 +36,7 @@ p.AFcom <- c()
 
 for (i in 1:rep.pow){
   Z1 <- rbinom(n, 1, 0.5)
-  ## assume the outcome is truly associated with the 1st (s) cluster
+  ## assume the outcome is truly associated with the 1st (s) cluster (s = 1)
   OTU <- simulateData.new(nSam = n, s = 1, ncluster = clu, mu = 1000, size = 25)
   X <- OTU$whole.OTU
   X.inf <- OTU$informative.OTU
