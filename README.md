@@ -1,1 +1,0 @@
-Simulation and real data analysis code in R for MiAF method.
