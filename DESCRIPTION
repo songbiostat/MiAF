@@ -1,0 +1,19 @@
+Package: MiAF
+Type: Package
+Title: Microbiome Adaptive Fisher Test
+Version: 1.0
+Authors@R: c(person("Qingyu", "Chen", role = c("aut", "cre"), email = "chen.8429@osu.edu"),
+            person("Shili", "Lin", role = "aut"),
+            person("Chi", "Song", role = "aut"))
+Maintainer: Qingyu Chen <chen.8429@osu.edu>
+Description: Test for overall association between the composition of a microbial community
+             and a host phenotype of interest (e.g. disease status) with/without covariate adjustments. 
+             In this package, we construct a novel community-level test, named MiAF,
+             by adaptively combining p-values from OTU-level (univariate) tests.
+Imports: statmod,
+         stats,
+         ape
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1

@@ -1,0 +1,49 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+# MiAF
+
+<!-- badges: start -->
+<!-- badges: end -->
+The goal of MiAF is to test for overall association between the composition of a microbial community and a host phenotype of interest (e.g. disease status) with/without covariate adjustments. In this package, we construct a novel community-level test, named MiAF, by adaptively combining p-values from OTU-level (univariate) tests.
+
+## Installation
+
+``` r
+library(devtools)
+install_github("songbiostat/MiAF")
+```
+
+## Arguments
+
+-   Y: a numeric vector for continuous or binary responses.
+-   X: a matrix of the OTU table. Row - samples, column - OTUs.
+-   tree: a rooted phylogenetic tree of R class "phylo".
+-   cov: a data frame/matrix for covariate adjustment Row - samples, column - covariates.
+-   model: "gaussian" is for the linear regression model (continuous); "binomial" is for the logistic regression model (binary).
+-   n.perm: the number of permutations.
+
+## Values
+
+-   UniFrac: unweighted UniFrac-like test p-value.
+-   wUniFrac: weighted UniFrac-like test p-value.
+-   UniFrac5: generalized UniFrac-like test p-value.
+-   tip.abun: leaf-nodes-only test p-value.
+-   com: p-value of MiAF test that combines p-values of the above four tests.
+-   select:a list of selected associated taxa.
+    -   lower: under-presented taxa based on lower-tail p-values.
+    -   upper: over-presented taxa based on upper-tail p-values.
+
+## Example
+
+``` r
+library(MiAF)
+library(GUniFrac)
+data(throat.otu.tab)
+data(throat.meta)
+data(throat.tree)
+
+y <- as.numeric(throat.meta$SmokingStatus == 'Smoker')
+gender <- as.numeric(throat.meta$Sex == 'Female')
+zcov <- as.matrix(gender)
+MiAF(Y = y, X = throat.otu.tab, tree = throat.tree, cov = zcov, model = "binomial", n.perm = 999)
+```
