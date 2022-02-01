@@ -9,6 +9,7 @@
 #' @param model "gaussian" is for the linear regression model (continuous);
 #'              "binomial" is for the logistic regression model (binary).
 #' @param n.perm The number of permutations.
+#' @param seed set seed.
 #'
 #' @return A list containing the following elements:
 #'         \item{UniFrac}{Unweighted UniFrac-like test p-value.}
@@ -22,118 +23,84 @@
 #'
 #' @export
 #'
-MiAF <- function (Y, X, tree, cov = NULL, model = c("gaussian","binomial"), n.perm)
+MiAF <- function (Y, X, tree, cov = NULL, model = c("gaussian","binomial"), n.perm, seed)
 {
   model <- match.arg(model)
   ext.prop <- cum_prop(X, tree)
   cum <- ext.prop$cum
   cum.labels <- ext.prop$cum.labels
   br.len <- ext.prop$br.len
-  br.len <- as.matrix(br.len)
-  cum.u <- cum
-  cum.u[cum.u != 0] <- 1 #unweighted
-  cum.5 <- sqrt(cum) # 0.5-power
-  lib.size <- rowSums(X)
-  tip.cum <- X/lib.size #only tip
 
-  p.u.w <- perm.mar.cov(Y, t(cum.u), t(cum), t(cum.5), tip.cum, binary = (model == "binomial"), cov = cov, nperm = n.perm)
-  rm(ext.prop, cum, cum.u, cum.5, tip.cum)
-  gc()
-
-  weight.u <- c(br.len) * p.u.w$weight1
-  weight.u.nz <- weight.u[weight.u != 0]
-  label.u <- cum.labels[weight.u != 0]
-  p1.u <- p.u.w$pval.1side1[, 1][weight.u != 0]
-  p1.u.perm <- p.u.w$pval.1side1[, -1][weight.u != 0, ]
-  ## unweighted test
-  cur.UniFrac.l <- AF_combine(p1.u, p1.u.perm, weight = weight.u.nz, log = FALSE)
-  sel.u.l <- cur.UniFrac.l$which.selected
-  cur.UniFrac.u <- AF_combine(1 - p1.u, 1 - p1.u.perm, weight = weight.u.nz, log = FALSE)
-  sel.u.u <- cur.UniFrac.u$which.selected
-  rm(p1.u, p1.u.perm, weight.u, weight.u.nz)
-  gc()
-  cur.UniFrac <- AF_combine(c(cur.UniFrac.l$pvalue, cur.UniFrac.u$pvalue), rbind(cur.UniFrac.l$p.perm, cur.UniFrac.u$p.perm), weight = 1, log = FALSE)
-  outcome.u <- cur.UniFrac$which.selected
-  rm(cur.UniFrac.l, cur.UniFrac.u)
-  gc()
-  AF.UniFrac <- cur.UniFrac$pvalue
-  sel.u <- select.l.u(sel.u.l, sel.u.u, com = outcome.u, label.u)
-  rm(sel.u.l, sel.u.u, outcome.u)
-  gc()
-
-  weight.w <- c(br.len) * p.u.w$weight2
-  weight.w.nz <- weight.w[weight.w != 0]
-  label.w <- cum.labels[weight.w != 0]
-  p1.w <- p.u.w$pval.1side2[, 1][weight.w != 0]
-  p1.w.perm <- p.u.w$pval.1side2[, -1][weight.w != 0, ]
   ## weighted test
-  cur.wUniFrac.l <- AF_combine(p1.w, p1.w.perm, weight = weight.w.nz, log = FALSE)
-  sel.w.l <- cur.wUniFrac.l$which.selected
-  cur.wUniFrac.u <- AF_combine(1 - p1.w, 1 - p1.w.perm, weight = weight.w.nz, log = FALSE)
-  sel.w.u <- cur.wUniFrac.u$which.selected
-  rm(p1.w, p1.w.perm, weight.w, weight.w.nz)
+  if(is.null(seed)) seed <- sample(10000, 1)
+  p.w <- perm.mar.cov(Y, t(cum), binary = (model == "binomial"), cov = cov, nperm = n.perm, seed = seed)
+  weight.w <- c(br.len) * p.w$weight
+  weight.w.nz <- weight.w[weight.w != 0]
+  p1.w <- p.w$pval.1side[weight.w != 0, ]
+  cur.wUniFrac.l <- AF_combine(p1.w, weight = weight.w.nz, log = FALSE)
+  cur.wUniFrac.u <- AF_combine(1 - p1.w, weight = weight.w.nz, log = FALSE)
+  rm(p.w, ext.prop, p1.w, weight.w.nz)
   gc()
-  cur.wUniFrac <- AF_combine(c(cur.wUniFrac.l$pvalue, cur.wUniFrac.u$pvalue), rbind(cur.wUniFrac.l$p.perm, cur.wUniFrac.u$p.perm), weight = 1, log = FALSE)
-  outcome.w <- cur.wUniFrac$which.selected
-  rm(cur.wUniFrac.l, cur.wUniFrac.u)
-  gc()
-  AF.wUniFrac <- cur.wUniFrac$pvalue
-  sel.w <- select.l.u(sel.w.l, sel.w.u, com = outcome.w, label.w)
-  rm(sel.w.l, sel.w.u, outcome.w)
+  cur.wUniFrac <- AF_combine(rbind(cur.wUniFrac.l$pvalue, cur.wUniFrac.u$pvalue), weight = 1, log = FALSE)
+  sel.w <- select.l.u(cur.wUniFrac.l$which.selected, cur.wUniFrac.u$which.selected, com = cur.wUniFrac$which.selected, cum.labels[weight.w != 0])
+  rm(weight.w, cur.wUniFrac.l, cur.wUniFrac.u)
   gc()
 
-  weight.5 <- c(br.len) * p.u.w$weight3
+  ## unweighted test
+  cum.u <- cum
+  cum.u[cum.u != 0] <- 1
+  p.u <- perm.mar.cov(Y, t(cum.u), binary = (model == "binomial"), cov = cov, nperm = n.perm, seed = seed)
+  weight.u <- c(br.len) * p.u$weight
+  weight.u.nz <- weight.u[weight.u != 0]
+  p1.u <- p.u$pval.1side[weight.u != 0, ]
+  cur.UniFrac.l <- AF_combine(p1.u, weight = weight.u.nz, log = FALSE)
+  cur.UniFrac.u <- AF_combine(1 - p1.u, weight = weight.u.nz, log = FALSE)
+  rm(p.u, p1.u, weight.u.nz)
+  gc()
+  cur.UniFrac <- AF_combine(rbind(cur.UniFrac.l$pvalue, cur.UniFrac.u$pvalue), weight = 1, log = FALSE)
+  sel.u <- select.l.u(cur.UniFrac.l$which.selected, cur.UniFrac.u$which.selected, com = cur.UniFrac$which.selected, cum.labels[weight.u != 0])
+  rm(cur.UniFrac.l, cur.UniFrac.u, weight.u)
+  gc()
+
+  ## square-root transformation test
+  cum.5 <- sqrt(cum)
+  p.5 <- perm.mar.cov(Y, t(cum.5), binary = (model == "binomial"), cov = cov, nperm = n.perm, seed = seed)
+  weight.5 <- c(br.len) * p.5$weight
   weight.5.nz <- weight.5[weight.5 != 0]
-  label.5 <- cum.labels[weight.5 != 0]
-  p1.5 <- p.u.w$pval.1side3[, 1][weight.5 != 0]
-  p1.5.perm <- p.u.w$pval.1side3[, -1][weight.5 != 0, ]
-  ## 0.5 - transformation test
-  cur.UniFrac5.l <- AF_combine(p1.5, p1.5.perm, weight = weight.5.nz, log = FALSE)
-  sel.5.l <- cur.UniFrac5.l$which.selected
-  cur.UniFrac5.u <- AF_combine(1 - p1.5, 1 - p1.5.perm, weight = weight.5.nz, log = FALSE)
-  sel.5.u <- cur.UniFrac5.u$which.selected
-  rm(p1.5, p1.5.perm, weight.5, weight.5.nz)
+  p1.5 <- p.5$pval.1side[weight.5 != 0, ]
+  cur.UniFrac5.l <- AF_combine(p1.5, weight = weight.5.nz, log = FALSE)
+  cur.UniFrac5.u <- AF_combine(1 - p1.5, weight = weight.5.nz, log = FALSE)
+  rm(p.5, cum, p1.5, weight.5.nz)
   gc()
-  cur.UniFrac5 <- AF_combine(c(cur.UniFrac5.l$pvalue, cur.UniFrac5.u$pvalue), rbind(cur.UniFrac5.l$p.perm, cur.UniFrac5.u$p.perm), weight = 1, log = FALSE)
-  outcome.5 <- cur.UniFrac5$which.selected
-  rm(cur.UniFrac5.l, cur.UniFrac5.u)
-  gc()
-  AF.UniFrac5 <- cur.UniFrac5$pvalue
-  sel.5 <- select.l.u(sel.5.l, sel.5.u, com = outcome.5, label.5)
-  rm(sel.5.l, sel.5.u, outcome.5)
+  cur.UniFrac5 <- AF_combine(rbind(cur.UniFrac5.l$pvalue, cur.UniFrac5.u$pvalue), weight = 1, log = FALSE)
+  sel.5 <- select.l.u(cur.UniFrac5.l$which.selected, cur.UniFrac5.u$which.selected, com = cur.UniFrac5$which.selected, cum.labels[weight.5 != 0])
+  rm(cur.UniFrac5.l, cur.UniFrac5.u, weight.5)
   gc()
 
-  weight.tip <- p.u.w$weight4
+  # leaf-nodes-only test
+  tip.cum <- X/rowSums(X) #only tip
+  p.tip <- perm.mar.cov(Y, tip.cum, binary = (model == "binomial"), cov = cov, nperm = n.perm, seed = seed)
+  weight.tip <- p.tip$weight
   weight.tip.nz <- weight.tip[weight.tip != 0]
-  label.tip <- colnames(X)
-  p1.tip <- p.u.w$pval.1side4[, 1][weight.tip != 0]
-  p1.tip.perm <- p.u.w$pval.1side4[, -1][weight.tip != 0, ]
-  ## only-tip-node test
-  cur.tip.l <- AF_combine(p1.tip, p1.tip.perm, weight = weight.tip.nz, log = FALSE)
-  sel.tip.l <- cur.tip.l$which.selected
-  cur.tip.u <- AF_combine(1 - p1.tip, 1 - p1.tip.perm, weight = weight.tip.nz, log = FALSE)
-  sel.tip.u <- cur.tip.u$which.selected
-  rm(p1.tip, p1.tip.perm, weight.tip, weight.tip.nz)
+  p1.tip <- p.tip$pval.1side[weight.tip != 0, ]
+  cur.tip.l <- AF_combine(p1.tip, weight = weight.tip.nz, log = FALSE)
+  cur.tip.u <- AF_combine(1 - p1.tip, weight = weight.tip.nz, log = FALSE)
+  rm(p.tip, p1.tip, weight.tip.nz)
   gc()
-  cur.tip <- AF_combine(c(cur.tip.l$pvalue, cur.tip.u$pvalue), rbind(cur.tip.l$p.perm, cur.tip.u$p.perm), weight = 1, log = FALSE)
-  outcome.tip <- cur.tip$which.selected
-  rm(cur.tip.l, cur.tip.u)
+  cur.tip <- AF_combine(rbind(cur.tip.l$pvalue, cur.tip.u$pvalue), weight = 1, log = FALSE)
+  sel.tip <- select.l.u(cur.tip.l$which.selected, cur.tip.u$which.selected, com = cur.tip$which.selected, colnames(X))
+  rm(cur.tip.l, cur.tip.u, weight.tip)
   gc()
-  AF.tip <- cur.tip$pvalue
-  sel.tip <- select.l.u(sel.tip.l, sel.tip.u, com = outcome.tip, label.tip)
-  rm(sel.tip.l, sel.tip.u, outcome.tip)
-  gc()
+
 
   ## ultimate combining
-  AFcom <- AF_combine(c(AF.UniFrac, AF.wUniFrac, AF.UniFrac5, AF.tip), rbind(cur.UniFrac$p.perm, cur.wUniFrac$p.perm, cur.UniFrac5$p.perm, cur.tip$p.perm), weight = 1, log = FALSE)
-  p.com <- AFcom$pvalue
-  outcome.com <- AFcom$which.selected
-  sel <- select.com(sel.u, sel.w, sel.5, sel.tip, outcome.com)
+  AFcom <- AF_combine(rbind(cur.UniFrac$pvalue, cur.wUniFrac$pvalue, cur.UniFrac5$pvalue, cur.tip$pvalue), weight = 1, log = FALSE)
+  sel <- select.com(sel.u, sel.w, sel.5, sel.tip, AFcom$which.selected)
 
-  return(list(UniFrac = AF.UniFrac,
-              wUniFrac = AF.wUniFrac,
-              UniFrac5 = AF.UniFrac5,
-              tip.abun = AF.tip,
-              com = p.com,
+  return(list(UniFrac = cur.UniFrac$pvalue[1],
+              wUniFrac = cur.wUniFrac$pvalue[1],
+              UniFrac5 = cur.UniFrac5$pvalue[1],
+              tip.abun = cur.tip$pvalue[1],
+              com = AFcom$pvalue[1],
               select = sel))
 }

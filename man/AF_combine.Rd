@@ -4,13 +4,14 @@
 \alias{AF_combine}
 \title{AF Combination of P-values}
 \usage{
-AF_combine(p, p.perm, weight = 1, log = TRUE)
+AF_combine(p, weight = 1, log = TRUE)
 }
 \arguments{
-\item{p}{P-values to be combined.}
-
-\item{p.perm}{A permutation set of p-values.
-A matrix with dimensions length(p) by B (the number of permutations).}
+\item{p}{P-values to be combined. A matrix with dimenstions K by B.
+If an object of p-values from perm.mar.cov() is used, K is the number
+of OTUs, and B is the number of permutataion plus 1.
+The first column is observed marginal p-values,
+and the rest columns are p-values for permutation.}
 
 \item{weight}{Weights given to the p-values.}
 
@@ -18,11 +19,8 @@ A matrix with dimensions length(p) by B (the number of permutations).}
 }
 \value{
 A list containing the following elements:
-        \item{pvalue}{P-value of AF statistic.}
-        \item{stat}{AF statistic.}
-        \item{p.perm}{P-values of AF statistics for all permuted samples.}
-        \item{stat.perm}{AF statistics for all permuted samples.}
-        \item{n.selected}{The number of features to be selected.}
+        \item{pvalue}{P-value of AF statistic for observed sample (the first element)
+                      and all permuted samples.}
         \item{which.selected}{The index of features to be selected.}
 }
 \description{

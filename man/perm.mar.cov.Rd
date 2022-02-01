@@ -4,35 +4,26 @@
 \alias{perm.mar.cov}
 \title{Score Statistics Permutation}
 \usage{
-perm.mar.cov(Y, X1, X2, X3, X4, binary = FALSE, cov = NULL, nperm)
+perm.mar.cov(Y, X, binary = FALSE, cov = NULL, nperm, seed)
 }
 \arguments{
 \item{Y}{A numeric vector for continuous or binary responses}
 
-\item{X1}{The matrix of unweighted taxon proportion for all non-rooted nodes.}
-
-\item{X2}{The matrix of weighted taxon proportion for all non-rooted nodes.}
-
-\item{X3}{The matrix of square-root transformed taxon proportion for all non-rooted nodes.}
-
-\item{X4}{The matrix of taxon proportion for tip nodes only.}
+\item{X}{The matrix of transformed taxon proportion.}
 
 \item{binary}{The indicator of whether the response is binary.}
 
 \item{cov}{The matrix/data frame of covariates.}
 
 \item{nperm}{The nnumber of permutations.}
+
+\item{seed}{Set seed.}
 }
 \value{
 A list containing the following elements:
-        \item{pval.1side1}{Lower-tail p-values of one-sided score tests using unweighted taxon proportion.}
-        \item{weight1}{Weights for all non-rooted nodes in the test using unweighted taxon proportion.}
-        \item{pval.1side2}{Lower-tail p-values of one-sided score tests using weighted taxon proportion.}
-        \item{weight2}{Weights for all non-rooted nodes in the test using weighted taxon proportion.}
-        \item{pval.1side3}{Lower-tail p-values of one-sided score tests using square-root transformed taxon proportion.}
-        \item{weight3}{Weights for all non-rooted nodes in the test using square-root transformed taxon proportion.}
-        \item{pval.1side4}{Lower-tail p-values of one-sided score tests using taxon proportion for tip nodes only.}
-        \item{weight4}{Weights for all non-rooted nodes in the test using taxon proportion for tip nodes only.}
+        \item{pval.1side1}{Lower-tail p-values of one-sided score tests.}
+        \item{weight}{Standard deviation of transformed microbial abundance,
+                     which will be used to calculate the weight.}
 }
 \description{
 Score Statistics Permutation

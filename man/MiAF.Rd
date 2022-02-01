@@ -4,7 +4,7 @@
 \alias{MiAF}
 \title{Microbiome Adaptive Fisher Test}
 \usage{
-MiAF(Y, X, tree, cov = NULL, model = c("gaussian", "binomial"), n.perm)
+MiAF(Y, X, tree, cov = NULL, model = c("gaussian", "binomial"), n.perm, seed)
 }
 \arguments{
 \item{Y}{A numeric vector for continuous or binary responses.}
@@ -21,6 +21,8 @@ Row - samples, column - covariates.}
 "binomial" is for the logistic regression model (binary).}
 
 \item{n.perm}{The number of permutations.}
+
+\item{seed}{set seed.}
 }
 \value{
 A list containing the following elements:
