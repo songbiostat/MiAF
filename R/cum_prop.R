@@ -74,7 +74,7 @@ cum_prop <- function (otu.tab, tree) {
 	}
 
 	if(is.null(tree$node.label)) tree$node.label <- paste("Node", 1:tree$Nnode, sep = "")
-	all.labels <- c(tree$tip.label, tree$node.label[-1])
+	all.labels <- c(tree$tip.label, tree$node.label)
 	cum.labels <- all.labels[tree$edge[, 2]]
 
 	out = list(cum = cum, br.len = br.len, cum.labels = cum.labels)
